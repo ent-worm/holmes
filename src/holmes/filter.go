@@ -2,6 +2,8 @@ package main
 
 import (
 	"fmt"
+	"net/http"
+	"regexp"
 	"time"
 )
 
@@ -45,34 +47,90 @@ func Filter(c chan int) {
 }
 
 func DoFilter(redisConn RedisConn, accesslog AccessLog) int {
-	FilterFlag := UNKNOWN
-	switch {
-	case (UNKNOWN == GUIDFilter(redisConn, accesslog)):
-		return FilterFlag
-	case (UNKNOWN == IPFilter(redisConn, accesslog)):
-		return FilterFlag
-	}
-	////FilterFlag = GUIDFilter(accesslog)
-	//FilterFlag = IPFilter(accesslog)
-	return FilterFlag
+	//if matched, err := regexp.MatchString("^/prop/view", accesslog.RequestURI); err == nil && matched {
+	//	if matched, err := regexp.MatchString("^2", accesslog.HttpCode); err == nil && matched {
+	//		fmt.Println(accesslog.RequestURI, accesslog.HttpCode)
+	//	}
+	//}
+	//FilterFlag := UNKNOWN
+	//if TRUE == ValidClickFilter(redisConn, accesslog);{
+	//    if FilterFlag =
+	//} else if
+	//switch {
+	//case (UNKNOWN == GUIDFilter(redisConn, accesslog)):
+	//	return FilterFlag
+	//case (UNKNOWN == IPFilter(redisConn, accesslog)):
+	//	return FilterFlag
+	//}
+	return URIFilter(redisConn, accesslog)
 }
 
-func GUIDFilter(redisConn RedisConn, accesslog AccessLog) int {
-	if accesslog.GUID == "-" {
-		return NO
+func URIFilter(redisConn RedisConn, accesslog AccessLog) int {
+	if matched, err := regexp.MatchString("^/prop/view", accesslog.RequestURI); err == nil && matched {
+		return HttpCodeFilter(redisConn, accesslog)
 	} else {
-		redisConn.ListLeftPush("guid", accesslog.GUID)
-		redisConn.ListLeftPush(accesslog.GUID, "----"+accesslog.Referer)
-		uri := accesslog.LogTimeString() + "==>" + accesslog.RequestURI
-		redisConn.ListLeftPush(accesslog.GUID, uri)
-		return YES
+		return UNKNOWN //Analysis(redisConn,accesslog)
 	}
 }
 
-func IPFilter(redisConn RedisConn, accesslog AccessLog) int {
-	redisConn.SetAdd("ip", accesslog.RemoteAddr)
-	redisConn.ListLeftPush(accesslog.RemoteAddr, "----"+accesslog.Referer)
-	uri := accesslog.LogTimeString() + "==>" + accesslog.RequestURI
-	redisConn.ListLeftPush(accesslog.RemoteAddr, uri)
+func HttpCodeFilter(redisConn RedisConn, accesslog AccessLog) int {
+	if matched, err := regexp.MatchString("^2", accesslog.HttpCode); err == nil && matched {
+		return SpiderFilter(redisConn, accesslog)
+	} else {
+		return UNKNOWN
+	}
+}
+
+func SpiderFilter(redisConn RedisConn, accesslog AccessLog) int {
+	res, err := http.Get("http://www.useragentstring.com/?usa=" + accesslog.UserAgent + "&getText=all")
+	if err != nil {
+		fmt.Println(err)
+	} else {
+		fmt.Println("success", res)
+	}
 	return UNKNOWN
 }
+
+func WhiteIpFilter(redisConn RedisConn, accesslog AccessLog) int {
+	//if {
+	//} else {
+
+	//}
+	return UNKNOWN
+}
+
+//func AddWatchingList(redisConn RedisConn, accesslog AccessLog) {
+//
+//}
+//
+//func DelWatchingList(redisConn RedisConn, accesslog AccessLog) {
+//
+//}
+//
+//func AddWhiteList(redisConn RedisConn, accesslog AccessLog){
+//
+//}
+//
+//func AddIgnoreList(redisConn RedisConn, accesslog Accesslog){
+//
+//}
+
+//func GUIDFilter(redisConn RedisConn, accesslog AccessLog) int {
+//	if accesslog.GUID == "-" {
+//		return NO
+//	} else {
+//		redisConn.ListLeftPush("guid", accesslog.GUID)
+//		redisConn.ListLeftPush(accesslog.GUID, "----"+accesslog.Referer)
+//		uri := accesslog.LogTimeString() + "==>" + accesslog.RequestURI
+//		redisConn.ListLeftPush(accesslog.GUID, uri)
+//		return YES
+//	}
+//}
+//
+//func IPFilter(redisConn RedisConn, accesslog AccessLog) int {
+//	redisConn.SetAdd("ip", accesslog.RemoteAddr)
+//	redisConn.ListLeftPush(accesslog.RemoteAddr, "----"+accesslog.Referer)
+//	uri := accesslog.LogTimeString() + "==>" + accesslog.RequestURI
+//	redisConn.ListLeftPush(accesslog.RemoteAddr, uri)
+//	return UNKNOWN
+//}
