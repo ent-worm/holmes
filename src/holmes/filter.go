@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 	//"net"
-	"net/http"
+	//"net/http"
 	"regexp"
 	"time"
 )
@@ -37,12 +37,12 @@ func Filter(c chan int) {
 
 		filterResult = DoFilter(redisConn, accesslog)
 
-        //  these should done in filter function
-        //
+		//  these should done in filter function
+		//
 		if filterResult == YES {
 			redisConn.ListLeftPush("accesslog_yes", accesslogLine)
 		}
-        //else if filterResult == NO {
+		//else if filterResult == NO {
 		//	redisConn.ListLeftPush("accesslog_no", accesslogLine)
 		//} else {
 		//	redisConn.ListLeftPush("accesslog_unkown", accesslogLine)
@@ -59,7 +59,7 @@ func URIFilter(redisConn RedisConn, accesslog AccessLog) int {
 	if matched, err := regexp.MatchString("^/prop/view", accesslog.RequestURI); err == nil && matched {
 		return HttpCodeFilter(redisConn, accesslog)
 	} else {
-        //TODO Analysis(redisConn,accesslog)
+		//TODO Analysis(redisConn,accesslog)
 		return UNKNOWN
 	}
 }
@@ -73,16 +73,18 @@ func HttpCodeFilter(redisConn RedisConn, accesslog AccessLog) int {
 }
 
 func UserAgentFilter(redisConn RedisConn, accesslog AccessLog) int {
-	_, err := http.Get("http://www.useragentstring.com/?usa=" + accesslog.UserAgent + "&getText=all")
-	if err != nil {
-		fmt.Println(err)
-	} else {
-		//	fmt.Println("success", res)
-	}
+	//////////// get UA type from website
+	//
+	//_, err := http.Get("http://www.useragentstring.com/?usa=" + accesslog.UserAgent + "&getText=all")
+	//if err != nil {
+	//	fmt.Println(err)
+	//} else {
+	//	//	fmt.Println("success", res)
+	//}
 	return UNKNOWN
 
-	//////////////test for DNS reverse lookup
-    //
+	////////////  DNS reverse lookup
+	//
 	//if matched,err := regexp.MatchString("[S|s]pider",accesslog.UserAgent) ; err != nil || !matched{
 	//    return UNKNOWN
 	//} else {
@@ -97,31 +99,31 @@ func UserAgentFilter(redisConn RedisConn, accesslog AccessLog) int {
 }
 
 func WhiteIpFilter(redisConn RedisConn, accesslog AccessLog) int {
-	if {
-        //if accesslog . RemoteAddr == (check whether in the whitelist)
+	if true {
+		//TODO if accesslog . RemoteAddr == (check whether in the whitelist)
 
-        return YES
+		return YES
 	} else {
-        return UNKNOWN
+		return UNKNOWN
 	}
 }
 
 func AddWatchingList(redisConn RedisConn, accesslog AccessLog) {
-    redisConn.ListLeftPush("WatchingList", accesslog.String())
+	redisConn.ListLeftPush("WatchingList", accesslog.String())
 }
 
 func DelWatchingList(redisConn RedisConn, accesslog AccessLog) {
-    //redisConn.ListRigthPop("WatchingList", accesslog.String())
-    //
-    //   TODO pop specific record
+	//redisConn.ListRigthPop("WatchingList", accesslog.String())
+	//
+	//   TODO pop specific record
 }
 
-func AddWhiteList(redisConn RedisConn, accesslog AccessLog){
-    redisConn.ListLeftPush("WhiteList", accesslog.String())
+func AddWhiteList(redisConn RedisConn, accesslog AccessLog) {
+	redisConn.ListLeftPush("WhiteList", accesslog.String())
 }
 
-func AddIgnoreList(redisConn RedisConn, accesslog Accesslog){
-    redisConn.ListLeftPush("IgnoreList", accesslog.String())
+func AddIgnoreList(redisConn RedisConn, accesslog AccessLog) {
+	redisConn.ListLeftPush("IgnoreList", accesslog.String())
 }
 
 //func GUIDFilter(redisConn RedisConn, accesslog AccessLog) int {
