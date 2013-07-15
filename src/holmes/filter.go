@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	//"net"
 	"net/http"
 	"regexp"
 	"time"
@@ -35,33 +36,22 @@ func Filter(c chan int) {
 		i++
 
 		filterResult = DoFilter(redisConn, accesslog)
+
+        //  these should done in filter function
+        //
 		if filterResult == YES {
 			redisConn.ListLeftPush("accesslog_yes", accesslogLine)
-		} else if filterResult == NO {
-			redisConn.ListLeftPush("accesslog_no", accesslogLine)
-		} else {
-			redisConn.ListLeftPush("accesslog_unkown", accesslogLine)
 		}
+        //else if filterResult == NO {
+		//	redisConn.ListLeftPush("accesslog_no", accesslogLine)
+		//} else {
+		//	redisConn.ListLeftPush("accesslog_unkown", accesslogLine)
+		//}
 	}
 	c <- 1
 }
 
 func DoFilter(redisConn RedisConn, accesslog AccessLog) int {
-	//if matched, err := regexp.MatchString("^/prop/view", accesslog.RequestURI); err == nil && matched {
-	//	if matched, err := regexp.MatchString("^2", accesslog.HttpCode); err == nil && matched {
-	//		fmt.Println(accesslog.RequestURI, accesslog.HttpCode)
-	//	}
-	//}
-	//FilterFlag := UNKNOWN
-	//if TRUE == ValidClickFilter(redisConn, accesslog);{
-	//    if FilterFlag =
-	//} else if
-	//switch {
-	//case (UNKNOWN == GUIDFilter(redisConn, accesslog)):
-	//	return FilterFlag
-	//case (UNKNOWN == IPFilter(redisConn, accesslog)):
-	//	return FilterFlag
-	//}
 	return URIFilter(redisConn, accesslog)
 }
 
@@ -69,51 +59,70 @@ func URIFilter(redisConn RedisConn, accesslog AccessLog) int {
 	if matched, err := regexp.MatchString("^/prop/view", accesslog.RequestURI); err == nil && matched {
 		return HttpCodeFilter(redisConn, accesslog)
 	} else {
-		return UNKNOWN //Analysis(redisConn,accesslog)
+        //TODO Analysis(redisConn,accesslog)
+		return UNKNOWN
 	}
 }
 
 func HttpCodeFilter(redisConn RedisConn, accesslog AccessLog) int {
 	if matched, err := regexp.MatchString("^2", accesslog.HttpCode); err == nil && matched {
-		return SpiderFilter(redisConn, accesslog)
+		return UserAgentFilter(redisConn, accesslog)
 	} else {
 		return UNKNOWN
 	}
 }
 
-func SpiderFilter(redisConn RedisConn, accesslog AccessLog) int {
-	res, err := http.Get("http://www.useragentstring.com/?usa=" + accesslog.UserAgent + "&getText=all")
+func UserAgentFilter(redisConn RedisConn, accesslog AccessLog) int {
+	_, err := http.Get("http://www.useragentstring.com/?usa=" + accesslog.UserAgent + "&getText=all")
 	if err != nil {
 		fmt.Println(err)
 	} else {
-		fmt.Println("success", res)
+		//	fmt.Println("success", res)
 	}
 	return UNKNOWN
+
+	//////////////test for DNS reverse lookup
+    //
+	//if matched,err := regexp.MatchString("[S|s]pider",accesslog.UserAgent) ; err != nil || !matched{
+	//    return UNKNOWN
+	//} else {
+	//    ans , err1 := net.LookupAddr(accesslog.RemoteAddr)
+	//    if err1 != nil{
+	//        fmt.Println("Failed",accesslog.UserAgent,"+", accesslog.RemoteAddr,err1)
+	//    } else {
+	//        fmt.Println("Successful",accesslog.UserAgent,"+",accesslog.RemoteAddr,"-->",ans)
+	//    }
+	//    return UNKNOWN
+	//}
 }
 
 func WhiteIpFilter(redisConn RedisConn, accesslog AccessLog) int {
-	//if {
-	//} else {
+	if {
+        //if accesslog . RemoteAddr == (check whether in the whitelist)
 
-	//}
-	return UNKNOWN
+        return YES
+	} else {
+        return UNKNOWN
+	}
 }
 
-//func AddWatchingList(redisConn RedisConn, accesslog AccessLog) {
-//
-//}
-//
-//func DelWatchingList(redisConn RedisConn, accesslog AccessLog) {
-//
-//}
-//
-//func AddWhiteList(redisConn RedisConn, accesslog AccessLog){
-//
-//}
-//
-//func AddIgnoreList(redisConn RedisConn, accesslog Accesslog){
-//
-//}
+func AddWatchingList(redisConn RedisConn, accesslog AccessLog) {
+    redisConn.ListLeftPush("WatchingList", accesslog.String())
+}
+
+func DelWatchingList(redisConn RedisConn, accesslog AccessLog) {
+    //redisConn.ListRigthPop("WatchingList", accesslog.String())
+    //
+    //   TODO pop specific record
+}
+
+func AddWhiteList(redisConn RedisConn, accesslog AccessLog){
+    redisConn.ListLeftPush("WhiteList", accesslog.String())
+}
+
+func AddIgnoreList(redisConn RedisConn, accesslog Accesslog){
+    redisConn.ListLeftPush("IgnoreList", accesslog.String())
+}
 
 //func GUIDFilter(redisConn RedisConn, accesslog AccessLog) int {
 //	if accesslog.GUID == "-" {
